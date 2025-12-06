@@ -2,6 +2,11 @@
 $pageTitle = 'Dashboard';
 require_once __DIR__ . '/../layout/header.php';
 require_once __DIR__ . '/../config/database.php';
+
+// Calculate base URL
+$docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
+$basePath = str_replace('\\', '/', __DIR__ . '/..');
+$baseUrl = str_replace($docRoot, '', $basePath);
 ?>
 
 <div class="container-fluid">

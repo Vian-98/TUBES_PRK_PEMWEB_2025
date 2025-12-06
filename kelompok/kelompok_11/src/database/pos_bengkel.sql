@@ -238,7 +238,11 @@ INSERT INTO `transactions` (`kode`, `pelanggan_nama`, `pelanggan_telepon`, `tota
 ('TRX20251201001', 'Customer Walk-in', '081234567899', 275000, 0, 275000, 300000, 25000, 'paid', 2, '2025-12-01 10:30:00'),
 ('TRX20251201002', 'Tono Suparman', '081234567898', 620000, 20000, 600000, 600000, 0, 'paid', 2, '2025-12-01 14:15:00'),
 ('TRX20251202001', 'Maria Ozawa', '081234567897', 175000, 0, 175000, 200000, 25000, 'paid', 2, '2025-12-02 09:45:00'),
-('TRX20251203001', 'Joko Widodo', '081234567896', 550000, 50000, 500000, 500000, 0, 'paid', 3, '2025-12-03 11:20:00');
+('TRX20251203001', 'Joko Widodo', '081234567896', 550000, 50000, 500000, 500000, 0, 'paid', 3, '2025-12-03 11:20:00'),
+-- Transaksi hari ini (untuk testing dashboard)
+('TRX20251206001', 'Andi Pratama', '081234567895', 225000, 0, 225000, 250000, 25000, 'paid', 2, CONCAT(CURDATE(), ' 09:15:00')),
+('TRX20251206002', 'Siti Aminah', '081234567894', 370000, 20000, 350000, 350000, 0, 'paid', 2, CONCAT(CURDATE(), ' 11:30:00')),
+('TRX20251206003', 'Budi Setiawan', '081234567893', 180000, 0, 180000, 200000, 20000, 'paid', 3, CONCAT(CURDATE(), ' 14:45:00'));
 
 -- TRANSACTION ITEMS
 INSERT INTO `transaction_items` (`transaction_id`, `service_id`, `part_id`, `nama_item`, `qty`, `harga_unit`, `subtotal`, `created_at`) VALUES
@@ -257,11 +261,25 @@ INSERT INTO `transaction_items` (`transaction_id`, `service_id`, `part_id`, `nam
 (4, 8, NULL, 'Perbaikan AC', 1, 250000, 250000, '2025-12-03 11:20:00'),
 (4, NULL, 16, 'Radiator Coolant 1L', 2, 55000, 110000, '2025-12-03 11:20:00'),
 (4, NULL, 18, 'Air Filter Cabin', 1, 65000, 65000, '2025-12-03 11:20:00'),
-(4, NULL, 1, 'Oli Mesin 1L Synthetic', 2, 75000, 150000, '2025-12-03 11:20:00');
+(4, NULL, 1, 'Oli Mesin 1L Synthetic', 2, 75000, 150000, '2025-12-03 11:20:00'),
+-- TRX005 (hari ini)
+(5, 1, NULL, 'Servis Ringan', 1, 150000, 150000, CONCAT(CURDATE(), ' 09:15:00')),
+(5, NULL, 1, 'Oli Mesin 1L Synthetic', 1, 75000, 75000, CONCAT(CURDATE(), ' 09:15:00')),
+-- TRX006 (hari ini)
+(6, 3, NULL, 'Tune Up Mesin', 1, 200000, 200000, CONCAT(CURDATE(), ' 11:30:00')),
+(6, NULL, 5, 'Busi Standar', 4, 25000, 100000, CONCAT(CURDATE(), ' 11:30:00')),
+(6, NULL, 3, 'Filter Oli Standar', 1, 40000, 40000, CONCAT(CURDATE(), ' 11:30:00')),
+-- TRX007 (hari ini)
+(7, 1, NULL, 'Servis Ringan', 1, 150000, 150000, CONCAT(CURDATE(), ' 14:45:00')),
+(7, NULL, 4, 'Filter Udara', 1, 50000, 50000, CONCAT(CURDATE(), ' 14:45:00'));
 
 -- PAYMENTS
 INSERT INTO `transaction_payments` (`transaction_id`, `metode`, `jumlah`, `dibayar_pada`, `created_by`, `created_at`) VALUES
 (1, 'tunai', 300000, '2025-12-01 10:35:00', 2, '2025-12-01 10:35:00'),
 (2, 'qris', 600000, '2025-12-01 14:20:00', 2, '2025-12-01 14:20:00'),
 (3, 'tunai', 200000, '2025-12-02 09:50:00', 2, '2025-12-02 09:50:00'),
-(4, 'transfer', 500000, '2025-12-03 11:25:00', 3, '2025-12-03 11:25:00');
+(4, 'transfer', 500000, '2025-12-03 11:25:00', 3, '2025-12-03 11:25:00'),
+-- Payments hari ini
+(5, 'tunai', 250000, CONCAT(CURDATE(), ' 09:20:00'), 2, CONCAT(CURDATE(), ' 09:20:00')),
+(6, 'qris', 350000, CONCAT(CURDATE(), ' 11:35:00'), 2, CONCAT(CURDATE(), ' 11:35:00')),
+(7, 'tunai', 200000, CONCAT(CURDATE(), ' 14:50:00'), 3, CONCAT(CURDATE(), ' 14:50:00'));
