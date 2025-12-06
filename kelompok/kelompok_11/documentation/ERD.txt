@@ -1,0 +1,165 @@
+# Entity Relationship Diagram (ERD)
+# POS UMKM Bengkel - Database Schema
+
+## Tabel Utama
+
+### 1. roles
+- id (PK)
+- nama
+- deskripsi
+- created_at
+- updated_at
+
+### 2. users
+- id (PK)
+- nama
+- email (UNIQUE)
+- password
+- role_id (FK -> roles.id)
+- telepon
+- alamat
+- aktif
+- created_at
+- updated_at
+
+### 3. suppliers
+- id (PK)
+- nama
+- kontak
+- telepon
+- alamat
+- created_at
+- updated_at
+
+### 4. services
+- id (PK)
+- nama
+- kode (UNIQUE)
+- deskripsi
+- harga
+- durasi_menit
+- created_at
+- updated_at
+
+### 5. parts (Sparepart)
+- id (PK)
+- nama
+- sku (UNIQUE)
+- image_url
+- deskripsi
+- harga_beli
+- harga_jual
+- stok
+- supplier_id (FK -> suppliers.id)
+- min_stok
+- created_at
+- updated_at
+
+### 6. stock_movements
+- id (PK)
+- part_id (FK -> parts.id)
+- tipe (masuk, keluar, penyesuaian)
+- qty
+- harga_unit
+- keterangan
+- created_by (FK -> users.id)
+- created_at
+
+### 7. reservations
+- id (PK)
+- kode (UNIQUE)
+- nama_pelanggan
+- telepon
+- plat_kendaraan
+- jenis_kendaraan
+- layanan_id (FK -> services.id)
+- mekanik_id (FK -> users.id)
+- tanggal
+- status (booked, in_progress, completed, canceled)
+- catatan
+- created_by (FK -> users.id)
+- created_at
+- updated_at
+
+### 8. reservation_checkins
+- id (PK)
+- reservation_id (FK -> reservations.id)
+- checked_in_at
+- checked_in_by (FK -> users.id)
+- draft_transaction_id
+- catatan
+- created_at
+
+### 9. transactions
+- id (PK)
+- kode (UNIQUE)
+- reservation_id (FK -> reservations.id)
+- pelanggan_nama
+- pelanggan_telepon
+- total
+- diskon
+- grand_total
+- bayar
+- kembali
+- status (draft, paid, cancelled, refunded)
+- kasir_id (FK -> users.id)
+- created_at
+- updated_at
+
+### 10. transaction_items
+- id (PK)
+- transaction_id (FK -> transactions.id)
+- service_id (FK -> services.id)
+- part_id (FK -> parts.id)
+- nama_item
+- qty
+- harga_unit
+- subtotal
+- created_at
+
+### 11. transaction_payments
+- id (PK)
+- transaction_id (FK -> transactions.id)
+- metode (tunai, qris, transfer)
+- jumlah
+- rincian
+- dibayar_pada
+- created_by (FK -> users.id)
+- created_at
+
+### 12. audit_logs
+- id (PK)
+- user_id (FK -> users.id)
+- action
+- tabel
+- record_id
+- before_data
+- after_data
+- created_at
+
+## Relasi Antar Tabel
+
+### One-to-Many Relationships:
+1. roles → users (1 role dapat memiliki banyak users)
+2. suppliers → parts (1 supplier dapat supply banyak parts)
+3. users → reservations (1 user dapat membuat banyak reservations sebagai creator)
+4. users → reservations (1 mekanik dapat handle banyak reservations)
+5. users → transactions (1 kasir dapat membuat banyak transactions)
+6. services → reservations (1 service dapat ada di banyak reservations)
+7. transactions → transaction_items (1 transaction dapat memiliki banyak items)
+8. reservations → transactions (1 reservation dapat menghasilkan 1 transaction)
+9. parts → transaction_items (1 part dapat dijual di banyak transaction items)
+10. parts → stock_movements (1 part dapat memiliki banyak stock movements)
+
+### Foreign Key Constraints:
+- Semua FK menggunakan constraint untuk maintain referential integrity
+- ON DELETE: Sesuai business logic (cascade/restrict)
+- ON UPDATE: CASCADE untuk propagate changes
+
+## Indeks
+- Primary Keys: Otomatis terindeks
+- Foreign Keys: Terindeks untuk performa JOIN
+- Unique Constraints: email, sku, kode transaksi, kode reservasi
+
+## Comments
+Tabel roles, users, suppliers memiliki comment untuk dokumentasi
