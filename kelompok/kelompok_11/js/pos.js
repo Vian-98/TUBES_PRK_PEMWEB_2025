@@ -265,6 +265,15 @@ function prosesPembayaran() {
 
   const diskon = parseFloat(document.getElementById('diskon').value) || 0;
   const grandTotal = total - diskon;
+  const metodePembayaran = document.getElementById('metodePembayaran').value;
+
+  // Cek jika metode QRIS
+  if (metodePembayaran === 'qris') {
+    prosesQRIS(total, diskon, grandTotal, namaPelanggan);
+    return;
+  }
+
+  // Untuk metode lain (tunai/transfer)
   const bayar = parseFloat(document.getElementById('jumlahBayar').value) || 0;
   const kembalian = bayar - grandTotal;
 
@@ -286,7 +295,7 @@ function prosesPembayaran() {
   formData.append('grand_total', grandTotal);
   formData.append('bayar', bayar);
   formData.append('kembali', kembalian);
-  formData.append('metode_pembayaran', document.getElementById('metodePembayaran').value);
+  formData.append('metode_pembayaran', metodePembayaran);
   formData.append('reservation_id', document.getElementById('reservationId').value);
   formData.append('draft_transaction_id', document.getElementById('draftTransactionId').value);
 
@@ -307,6 +316,119 @@ function prosesPembayaran() {
       console.error('Error:', error);
       alert('❌ Terjadi kesalahan saat memproses transaksi!');
     });
+}
+
+// ========================================
+// FUNGSI PROSES QRIS
+// ========================================
+function prosesQRIS(total, diskon, grandTotal, namaPelanggan) {
+  const payload = {
+    items: cartItems,
+    nama_pelanggan: namaPelanggan,
+    telepon_pelanggan: document.getElementById('teleponPelanggan').value.trim(),
+    total: total,
+    diskon: diskon,
+    grand_total: grandTotal,
+    reservation_id: document.getElementById('reservationId').value,
+    draft_transaction_id: document.getElementById('draftTransactionId').value,
+  };
+
+  fetch('generate_qris.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.status === 'success') {
+        showQRISModal(data);
+        startPaymentPolling(data.kode_transaksi, data.transaction_id);
+      } else {
+        alert('❌ Error: ' + data.message);
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+      alert('❌ Terjadi kesalahan saat generate QRIS!');
+    });
+}
+
+// ========================================
+// FUNGSI TAMPILKAN MODAL QRIS
+// ========================================
+function showQRISModal(data) {
+  const modal = document.getElementById('modalQRIS');
+  const qrContainer = document.getElementById('qrCodeContainer');
+  const qrAmount = document.getElementById('qrAmount');
+  const qrCode = document.getElementById('qrCode');
+  const qrExpiry = document.getElementById('qrExpiry');
+
+  qrAmount.textContent = 'Rp ' + formatRupiah(data.amount);
+  qrCode.textContent = data.kode_transaksi;
+  qrContainer.innerHTML =
+    '<img src="' + data.qr_image_url + '" alt="QR Code" class="mx-auto" style="max-width: 300px;">';
+
+  const expiredDate = new Date(data.expired_at);
+  qrExpiry.textContent = expiredDate.toLocaleString('id-ID');
+
+  modal.classList.remove('hidden');
+}
+
+// ========================================
+// FUNGSI CLOSE MODAL QRIS
+// ========================================
+function closeQRISModal(skipConfirm = false) {
+  if (window.pollingInterval) {
+    clearInterval(window.pollingInterval);
+  }
+
+  const modal = document.getElementById('modalQRIS');
+  modal.classList.add('hidden');
+
+  // FIX: Jangan tanya konfirmasi jika pembayaran berhasil (skipConfirm = true)
+  if (!skipConfirm && confirm('Batalkan transaksi QRIS?')) {
+    resetForm();
+  }
+}
+
+// ========================================
+// FUNGSI POLLING STATUS PEMBAYARAN
+// ========================================
+function startPaymentPolling(kodeTransaksi, transactionId) {
+  let elapsedTime = 0;
+  const maxTime = 300; // 5 menit
+
+  window.pollingInterval = setInterval(async () => {
+    try {
+      const response = await fetch('check_payment_status.php?tx=' + kodeTransaksi);
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        if (result.payment_status === 'paid') {
+          clearInterval(window.pollingInterval);
+          // FIX: Close modal tanpa konfirmasi (skipConfirm = true)
+          const modal = document.getElementById('modalQRIS');
+          modal.classList.add('hidden');
+          alert('✅ Pembayaran QRIS berhasil!\nKode: ' + kodeTransaksi);
+          window.location.href = 'struk.php?id=' + transactionId;
+        } else if (result.payment_status === 'expired' || result.is_expired) {
+          clearInterval(window.pollingInterval);
+          alert('⏰ QRIS telah expired. Silakan buat transaksi baru.');
+          closeQRISModal();
+        }
+      }
+
+      elapsedTime += 3;
+
+      if (elapsedTime >= maxTime) {
+        clearInterval(window.pollingInterval);
+        alert('⏰ Waktu pembayaran habis. QRIS expired.');
+        closeQRISModal();
+      }
+    } catch (error) {
+      console.error('Polling error:', error);
+    }
+  }, 3000); // Polling setiap 3 detik
 }
 
 // ========================================

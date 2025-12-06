@@ -299,5 +299,58 @@ if (isset($_GET['draft_id'])) {
         setInterval(updateClock, 1000);
         updateClock();
     </script>
+
+    <!-- Modal QRIS -->
+    <div id="modalQRIS" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-qrcode text-3xl text-blue-600"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Scan QRIS</h2>
+                <p class="text-gray-600 text-sm mb-6">Scan dengan kamera HP untuk melakukan pembayaran</p>
+            </div>
+
+            <!-- QR Code Container -->
+            <div id="qrCodeContainer" class="mb-6 bg-gray-50 p-4 rounded-xl">
+                <!-- QR Code will be injected here -->
+            </div>
+
+            <!-- Transaction Info -->
+            <div class="bg-blue-50 rounded-xl p-4 mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600">Total Pembayaran:</span>
+                    <strong id="qrAmount" class="text-2xl text-blue-600">Rp 0</strong>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600">Kode Transaksi:</span>
+                    <strong id="qrCode" class="text-gray-800"></strong>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="text-center mb-4">
+                <div class="animate-pulse inline-flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
+                    <span class="text-blue-600 font-medium">Menunggu pembayaran...</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    <i class="fas fa-clock mr-1"></i>
+                    Expired pada: <span id="qrExpiry"></span>
+                </p>
+            </div>
+
+            <!-- Button Batal -->
+            <button onclick="closeQRISModal()" 
+                    class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">
+                <i class="fas fa-times mr-2"></i>
+                Batalkan
+            </button>
+
+            <p class="text-center text-xs text-gray-500 mt-4">
+                Sistem akan otomatis update setelah pembayaran berhasil
+            </p>
+        </div>
+    </div>
 </body>
 </html>
