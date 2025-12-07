@@ -216,7 +216,19 @@ function hitungGrandTotal() {
   const grandTotal = total - diskon;
 
   document.getElementById('grandTotal').textContent = 'Rp ' + formatRupiah(grandTotal);
-  hitungKembalian();
+
+  // Auto-update jumlah bayar jika bukan QRIS
+  const metodePembayaran = document.getElementById('metodePembayaran').value;
+  if (metodePembayaran !== 'qris') {
+    const jumlahBayarInput = document.getElementById('jumlahBayar');
+    if (
+      parseFloat(jumlahBayarInput.value) === 0 ||
+      parseFloat(jumlahBayarInput.value) < grandTotal
+    ) {
+      jumlahBayarInput.value = grandTotal;
+    }
+    hitungKembalian();
+  }
 }
 
 // ========================================
@@ -447,7 +459,8 @@ function resetForm() {
     document.getElementById('jumlahBayar').value = '0';
     document.getElementById('metodePembayaran').selectedIndex = 0;
 
-    hitungKembalian();
+    // Reset UI metode pembayaran
+    handleMetodePembayaranChange();
   }
 }
 
@@ -677,3 +690,37 @@ document.addEventListener('keydown', function (e) {
     prosesPembayaran();
   }
 });
+
+// ========================================
+// FUNGSI HANDLE METODE PEMBAYARAN CHANGE
+// ========================================
+function handleMetodePembayaranChange() {
+  const metodePembayaran = document.getElementById('metodePembayaran').value;
+  const jumlahBayarInput = document.getElementById('jumlahBayar');
+  const jumlahBayarContainer = document.getElementById('jumlahBayarContainer');
+  const qrisNotice = document.getElementById('qrisNotice');
+  const kembalianContainer = document.getElementById('kembalianContainer');
+
+  if (metodePembayaran === 'qris') {
+    // QRIS: Hide input jumlah bayar & kembalian, show notice
+    jumlahBayarContainer.classList.add('hidden');
+    kembalianContainer.classList.add('hidden');
+    qrisNotice.classList.remove('hidden');
+
+    // Reset values
+    jumlahBayarInput.value = 0;
+    document.getElementById('kembalian').textContent = 'Rp 0';
+  } else {
+    // Tunai/Transfer: Show input & kembalian, hide notice
+    jumlahBayarContainer.classList.remove('hidden');
+    kembalianContainer.classList.remove('hidden');
+    qrisNotice.classList.add('hidden');
+
+    // Auto-fill dengan grand total
+    const grandTotalText = document.getElementById('grandTotal').textContent;
+    const grandTotal = parseFloat(grandTotalText.replace(/[^0-9]/g, '')) || 0;
+    jumlahBayarInput.value = grandTotal;
+
+    hitungKembalian();
+  }
+}

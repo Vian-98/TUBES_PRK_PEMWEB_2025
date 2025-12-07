@@ -254,23 +254,38 @@ if (isset($_GET['draft_id'])) {
                     <!-- Metode Pembayaran -->
                     <div class="mb-4">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Metode Pembayaran</label>
-                        <select id="metodePembayaran" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="tunai">Tunai</option>
-                            <option value="qris">QRIS</option>
-                            <option value="transfer">Transfer Bank</option>
+                        <select id="metodePembayaran" onchange="handleMetodePembayaranChange()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="tunai">💵 Tunai</option>
+                            <option value="qris">📱 QRIS</option>
+                            <option value="transfer">🏦 Transfer Bank</option>
                         </select>
                     </div>
 
                     <!-- Jumlah Bayar -->
-                    <div class="mb-4">
+                    <div class="mb-4" id="jumlahBayarContainer">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Jumlah Bayar</label>
                         <input type="number" id="jumlahBayar" value="0" min="0" 
                                onchange="hitungKembalian()"
                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Masukkan jumlah uang yang diterima</p>
+                    </div>
+
+                    <!-- QRIS Notice (hidden by default) -->
+                    <div class="mb-4 hidden" id="qrisNotice">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-qrcode text-2xl text-blue-600"></i>
+                                <div>
+                                    <p class="font-semibold text-blue-800 mb-1">Pembayaran QRIS</p>
+                                    <p class="text-sm text-blue-600">QR Code akan otomatis di-generate sesuai grand total</p>
+                                    <p class="text-xs text-blue-500 mt-1">Customer scan QR untuk membayar secara digital</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Kembalian -->
-                    <div class="mb-6 p-4 bg-yellow-50 rounded-lg">
+                    <div class="mb-6 p-4 bg-yellow-50 rounded-lg" id="kembalianContainer">
                         <div class="flex justify-between items-center">
                             <span class="text-gray-700 font-semibold">Kembalian</span>
                             <span class="text-xl font-bold text-yellow-600" id="kembalian">Rp 0</span>
