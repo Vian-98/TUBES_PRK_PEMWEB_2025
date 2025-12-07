@@ -7,9 +7,9 @@
 // Konfigurasi koneksi database
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'tomy#root');
 define('DB_NAME', 'pos_bengkel');
-define('DB_PORT', 3306);
+define('DB_PORT', 3307);
 
 // Buat koneksi
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);

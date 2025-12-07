@@ -93,7 +93,7 @@ try {
     // Kalau akses http://192.168.1.100:8082 → HTTP_HOST = 192.168.1.100:8082
     $host_with_port = $_SERVER['HTTP_HOST'];
     
-    $verify_url = $protocol . '://' . $host_with_port . '/TUBES_PRK_PEMWEB_2025/kelompok/kelompok_11/pos/verify_qris.php?tx=' . urlencode($kode_transaksi);
+    $verify_url = $protocol . '://' . $host_with_port . '/TUBES_PRK_PEMWEB_2025/kelompok/kelompok_11/src/pos/verify_qris.php?tx=' . urlencode($kode_transaksi);
     
     $expired_at = date('Y-m-d H:i:s', strtotime('+5 minutes'));
     
