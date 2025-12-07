@@ -1,14 +1,12 @@
 <?php
-session_start();
+// Set page title untuk layout
+$pageTitle = 'Point of Sale';
 
-// Cek apakah user sudah login
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.php');
-    exit;
-}
+// Include layout header (sudah handle session & auth)
+require_once __DIR__ . '/../layout/header.php';
 
 // Koneksi database
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 $conn = getConnection(); 
 
 // Ambil data layanan
@@ -27,7 +25,6 @@ $reservation_data = null;
 if (isset($_GET['draft_id'])) {
     $draft_id = intval($_GET['draft_id']);
     
-    // FIX: Query yang benar dengan FROM clause
     $stmt = $conn->prepare("SELECT t.*, r.kode as reservation_kode, r.nama_pelanggan as res_pelanggan, r.telepon as res_telepon 
                              FROM transactions t 
                              LEFT JOIN reservations r ON t.reservation_id = r.id 
@@ -36,75 +33,73 @@ if (isset($_GET['draft_id'])) {
     $stmt->execute();
     $result = $stmt->get_result();
     $draft_transaction = $result->fetch_assoc();
-    // echo "<pre>DEBUG Draft Transaction:"; print_r($draft_transaction); echo "</pre>";
+    
     if ($draft_transaction) {
         // Ambil items dari draft
         $stmt_items = $conn->prepare("SELECT * FROM transaction_items WHERE transaction_id = ?");
         $stmt_items->bind_param("i", $draft_id);
         $stmt_items->execute();
         $draft_items = $stmt_items->get_result()->fetch_all(MYSQLI_ASSOC);
-        // echo "<pre>DEBUG Draft Items:"; print_r($draft_items); echo "</pre>";
-    } else {
-        // echo "<div style='background: red; color: white; padding: 10px; margin: 10px;'>Draft ID $draft_id tidak ditemukan atau status bukan 'draft'</div>";
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS - Bengkel UMKM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .card-item:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-        .card-item {
-            transition: all 0.3s ease;
-        }
-        .item-image {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-        }
-        .tab-active {
-            border-bottom: 3px solid #2563eb;
-            color: #2563eb;
-        }
-    </style>
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-6">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-800">
-                        <i class="fas fa-cash-register text-blue-600"></i> Point of Sale
-                    </h1>
-                    <p class="text-gray-600 mt-1">Kasir: <?php echo htmlspecialchars($_SESSION['nama']); ?></p>
-                    <?php if ($draft_transaction): ?>
-                        <p class="text-green-600 font-semibold mt-2">
-                            <i class="fas fa-calendar-check"></i> 
-                            Draft dari Reservasi: <?php echo htmlspecialchars($draft_transaction['reservation_kode']); ?>
-                        </p>
-                    <?php endif; ?>
-                </div>
-                <div class="text-right">
-                    <p class="text-sm text-gray-600">Tanggal</p>
-                    <p class="text-lg font-semibold" id="currentDate"></p>
-                    <p class="text-lg font-semibold" id="currentTime"></p>
-                </div>
+
+<!-- Custom styles untuk POS -->
+<style>
+    .card-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .card-item {
+        transition: all 0.3s ease;
+    }
+    .item-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+    .tab-active {
+        border-bottom: 3px solid #2563eb;
+        color: #2563eb;
+    }
+</style>
+
+<!-- POS Content -->
+<div class="space-y-6">
+    <!-- Header Info Card -->
+    <?php if ($draft_transaction): ?>
+    <div class="glass-panel rounded-2xl p-6 border border-green-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <i class="fas fa-calendar-check text-xl"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900">Draft dari Reservasi</h3>
+                <p class="text-sm text-gray-600">
+                    Kode: <strong class="text-green-600"><?php echo htmlspecialchars($draft_transaction['reservation_kode']); ?></strong> 
+                    | Kasir: <strong><?php echo htmlspecialchars($_SESSION['nama']); ?></strong>
+                </p>
             </div>
         </div>
+    </div>
+    <?php else: ?>
+    <div class="glass-panel rounded-2xl p-6">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <i class="fas fa-cash-register text-xl"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900">Transaksi Baru</h3>
+                <p class="text-sm text-gray-600">Kasir: <strong><?php echo htmlspecialchars($_SESSION['nama']); ?></strong></p>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Kolom Kiri: Katalog Produk -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="glass-panel rounded-2xl p-6 shadow-glass">
                     <!-- Tab Navigation -->
                     <div class="flex border-b mb-6">
                         <button onclick="switchTab('layanan')" id="tabLayanan" class="px-6 py-3 font-semibold text-gray-700 tab-active">
@@ -131,7 +126,7 @@ if (isset($_GET['draft_id'])) {
                         $services->data_seek(0); // Reset pointer
                         while ($service = $services->fetch_assoc()): 
                         ?>
-                            <div class="card-item bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:border-blue-500 flex flex-col" data-type="layanan" data-nama="<?php echo strtolower($service['nama']); ?>">
+                            <div class="card-item bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-500 flex flex-col shadow-sm" data-type="layanan" data-nama="<?php echo strtolower($service['nama']); ?>">
                                 <div class="bg-gradient-to-br from-blue-500 to-blue-600 h-32 flex items-center justify-center flex-shrink-0">
                                     <i class="fas fa-tools text-6xl text-white opacity-50"></i>
                                 </div>
@@ -157,7 +152,7 @@ if (isset($_GET['draft_id'])) {
                         $parts->data_seek(0); // Reset pointer
                         while ($part = $parts->fetch_assoc()): 
                         ?>
-                            <div class="card-item bg-white border-2 border-gray-200 rounded-lg overflow-hidden hover:border-green-500 flex flex-col" data-type="sparepart" data-nama="<?php echo strtolower($part['nama']); ?>">
+                            <div class="card-item bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-xl overflow-hidden hover:border-green-500 flex flex-col shadow-sm" data-type="sparepart" data-nama="<?php echo strtolower($part['nama']); ?>">
                                 <?php if (!empty($part['image_url'])): ?>
                                     <!-- Tampilkan gambar jika ada -->
                                     <img src="<?php echo htmlspecialchars($part['image_url']); ?>" 
@@ -195,7 +190,7 @@ if (isset($_GET['draft_id'])) {
                 </div>
 
                 <!-- Keranjang Belanja -->
-                <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                <div class="glass-panel rounded-2xl p-6 shadow-glass mt-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">
                         <i class="fas fa-shopping-cart text-purple-600"></i> Keranjang Belanja
                         <span id="cartCount" class="ml-2 bg-purple-600 text-white text-sm px-3 py-1 rounded-full">0</span>
@@ -214,7 +209,7 @@ if (isset($_GET['draft_id'])) {
 
             <!-- Kolom Kanan: Pembayaran -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
+                <div class="glass-panel rounded-2xl p-6 shadow-glass sticky top-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">
                         <i class="fas fa-money-bill-wave text-green-600"></i> Pembayaran
                     </h2>
@@ -324,16 +319,6 @@ if (isset($_GET['draft_id'])) {
                 });
             <?php endforeach; ?>
         <?php endif; ?>
-
-        // Update waktu realtime
-        function updateClock() {
-            const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('id-ID', options);
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('id-ID');
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
     </script>
 
     <!-- Modal QRIS -->
@@ -388,5 +373,8 @@ if (isset($_GET['draft_id'])) {
             </p>
         </div>
     </div>
-</body>
-</html>
+
+<?php 
+// Include layout footer
+require_once __DIR__ . '/../layout/footer.php'; 
+?>
