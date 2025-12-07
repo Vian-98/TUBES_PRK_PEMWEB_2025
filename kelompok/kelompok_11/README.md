@@ -6,8 +6,8 @@
 - MUHAMMAD FAVIAN RIZKI (2315061067)
 
 **Anggota:**
-1. Daffa Raihan Permana (2315061082) - User Management & Role Access
-2. Ary Nanda Pratama (2315061039) - Modul Reservasi Bengkel
+1. Ary Nanda Pratama (2315061039) - User Management & Role Access
+2. Daffa Raihan Permana (2315061082) - Modul Reservasi Bengkel
 3. Tomy Arya Fiosa (2315061110) - POS (Kasir), Transaksi & Stok
 4. Muhammad Favian Rizki (2315061067) - Inventory, Dashboard, UI & Dokumentasi
 
