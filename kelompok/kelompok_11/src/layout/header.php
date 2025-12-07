@@ -201,9 +201,20 @@ $notif_count = count($notifications);
             </div>
 
             <div class="flex items-center gap-4">
+                <!-- Context-Aware Search -->
                 <div class="hidden md:flex items-center bg-white/60 backdrop-blur-md rounded-full px-4 py-2 border border-white/50 shadow-sm focus-within:ring-2 focus-within:ring-brand-blue/50 transition w-64">
                     <i class="fas fa-search text-gray-400"></i>
-                    <input type="text" placeholder="Cari..." class="bg-transparent border-none outline-none text-sm ml-2 w-full placeholder-gray-500 text-gray-700">
+                    <input type="text" id="global-search" placeholder="<?php 
+                        if (strpos($currentPage, 'part_') !== false || strpos($currentPage, 'supplier_') !== false) {
+                            echo 'Cari sparepart/supplier...';
+                        } elseif (strpos($currentPage, 'reservasi') !== false) {
+                            echo 'Cari reservasi...';
+                        } elseif (strpos($currentPage, 'pos') !== false || strpos($currentPage, 'transaksi') !== false) {
+                            echo 'Cari transaksi...';
+                        } else {
+                            echo 'Cari...';
+                        }
+                    ?>" class="bg-transparent border-none outline-none text-sm ml-2 w-full placeholder-gray-500 text-gray-700">
                 </div>
 
                 <!-- Notification Dropdown -->
@@ -262,3 +273,38 @@ $notif_count = count($notifications);
 
         <!-- Scrollable Content -->
         <main class="flex-1 overflow-x-hidden overflow-y-auto px-8 pb-8">
+
+<script>
+// Context-Aware Search
+document.getElementById('global-search')?.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    const currentPage = '<?= $currentPage ?>';
+    
+    // Inventory pages (part & supplier)
+    if (currentPage.includes('part_') || currentPage.includes('supplier_')) {
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    }
+    
+    // Dashboard - search cards/stats
+    else if (currentPage.includes('dashboard')) {
+        const cards = document.querySelectorAll('.glass-panel');
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.opacity = text.includes(searchTerm) || searchTerm === '' ? '1' : '0.3';
+        });
+    }
+    
+    // Other pages - generic search
+    else {
+        const rows = document.querySelectorAll('tbody tr, .search-item');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    }
+});
+</script>
