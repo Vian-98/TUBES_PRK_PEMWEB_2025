@@ -37,12 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<!-- Header -->
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-3xl font-bold text-white mb-2">Tambah Supplier</h1>
-        <p class="text-white/80">Tambah data supplier baru</p>
-    </div>
+<!-- Back Button -->
+<div class="flex justify-end items-center mb-6">
     <a href="supplier_list.php" class="glass-panel px-4 py-2 rounded-xl hover:shadow-glass transition flex items-center gap-2">
         <i class="fas fa-arrow-left text-brand-blue"></i>
         <span class="font-medium text-brand-dark">Kembali</span>

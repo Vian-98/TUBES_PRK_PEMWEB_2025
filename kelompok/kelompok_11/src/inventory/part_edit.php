@@ -67,12 +67,8 @@ $pageTitle = 'Edit Sparepart';
 require_once __DIR__ . '/../layout/header.php';
 ?>
 
-<!-- Header -->
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-3xl font-bold text-white mb-2">Edit Sparepart</h1>
-        <p class="text-white/80">Update data sparepart inventory</p>
-    </div>
+<!-- Back Button -->
+<div class="flex justify-end items-center mb-6">
     <a href="part_list.php" class="glass-panel px-4 py-2 rounded-xl hover:shadow-glass transition flex items-center gap-2">
         <i class="fas fa-arrow-left text-brand-blue"></i>
         <span class="font-medium text-brand-dark">Kembali</span>

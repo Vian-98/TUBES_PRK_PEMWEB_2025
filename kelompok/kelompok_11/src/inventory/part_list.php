@@ -13,20 +13,14 @@ $sql = "SELECT p.*, s.nama as supplier_nama
 $parts = fetchAll($sql);
 ?>
 
-<!-- Header Section -->
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-3xl font-bold text-white mb-2">Daftar Sparepart</h1>
-        <p class="text-white/80">Kelola inventori sparepart bengkel</p>
-    </div>
-    <div class="flex gap-3">
+<!-- Action Buttons -->
+<div class="flex justify-end items-center gap-3 mb-6">
         <a href="supplier_list.php" class="px-5 py-2.5 bg-white/60 backdrop-blur-md text-gray-700 text-sm font-medium rounded-full shadow-sm border border-white/50 hover:bg-white transition">
             <i class="fas fa-truck mr-2"></i>Supplier
         </a>
-        <a href="part_add.php" class="px-6 py-2.5 bg-brand-dark text-white text-sm font-medium rounded-full shadow-lg hover:shadow-xl hover:bg-black transition transform hover:-translate-y-0.5">
-            <i class="fas fa-plus mr-2"></i>Tambah Sparepart
-        </a>
-    </div>
+    <a href="part_add.php" class="px-6 py-2.5 bg-brand-dark text-white text-sm font-medium rounded-full shadow-lg hover:shadow-xl hover:bg-black transition transform hover:-translate-y-0.5">
+        <i class="fas fa-plus mr-2"></i>Tambah Sparepart
+    </a>
 </div>
 
 <!-- Table Card -->
