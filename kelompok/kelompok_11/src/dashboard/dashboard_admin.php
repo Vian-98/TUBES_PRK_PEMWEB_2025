@@ -100,12 +100,6 @@ $sql_recent_activity = "SELECT 'reservation' as tipe, kode, nama_pelanggan as de
 $recent_activity = fetchAll($sql_recent_activity);
 ?>
 
-<!-- Header Section -->
-<div class="mb-6">
-    <h1 class="text-3xl font-bold text-white mb-2">Dashboard Admin</h1>
-    <p class="text-white/80">Monitoring sistem POS Bengkel secara real-time</p>
-</div>
-
 <!-- Main Stats Grid - 4 Cards -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     
