@@ -200,9 +200,9 @@ $flash = get_flash();
         
         <form method="POST" action="">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required 
-                       placeholder="Masukkan username" autofocus>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="Masukkan email" autofocus>
             </div>
             
             <div class="form-group">
@@ -220,9 +220,8 @@ $flash = get_flash();
         
         <div class="demo-info">
             <strong>🎯 Demo Account:</strong><br>
-            Admin: admin / admin123<br>
-            Kasir: kasir1 / admin123<br>
-            Mekanik: mekanik1 / admin123
+            Email: admin@bengkel.com<br>
+            Password: admin
         </div>
     </div>
     
