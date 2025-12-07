@@ -9,13 +9,13 @@ redirect_if_logged_in();
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = escape($_POST['username'] ?? '');
+    $email = escape($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     
-    if (empty($username) || empty($password)) {
-        $error = "Username dan password harus diisi!";
+    if (empty($email) || empty($password)) {
+        $error = "Email dan password harus diisi!";
     } else {
-        $sql = "SELECT * FROM users WHERE username = '$username' AND is_active = 1";
+        $sql = "SELECT u.*, r.nama as role FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email = '$email' AND u.aktif = 1";
         $result = query($sql);
         
         if (count($result) > 0) {
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (password_verify($password, $user['password'])) {
                 set_user_session($user);
-                set_flash("Login berhasil! Selamat datang " . $user['full_name'], "success");
+                set_flash("Login berhasil! Selamat datang " . $user['nama'], "success");
                 header("Location: ../dashboard/index.php");
                 exit();
             } else {

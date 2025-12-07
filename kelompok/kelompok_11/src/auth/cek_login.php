@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 function is_logged_in() {
-    return isset($_SESSION['user_id']) && isset($_SESSION['username']);
+    return isset($_SESSION['user_id']) && isset($_SESSION['nama']);
 }
 
 function check_role($allowed_roles = []) {
@@ -59,8 +59,7 @@ function get_user_data() {
     
     return [
         'id' => $_SESSION['user_id'],
-        'username' => $_SESSION['username'],
-        'full_name' => $_SESSION['full_name'],
+        'nama' => $_SESSION['nama'],
         'email' => $_SESSION['email'],
         'role' => $_SESSION['role']
     ];
@@ -68,8 +67,7 @@ function get_user_data() {
 
 function set_user_session($user_data) {
     $_SESSION['user_id'] = $user_data['id'];
-    $_SESSION['username'] = $user_data['username'];
-    $_SESSION['full_name'] = $user_data['full_name'];
+    $_SESSION['nama'] = $user_data['nama'];
     $_SESSION['email'] = $user_data['email'];
     $_SESSION['role'] = $user_data['role'];
     $_SESSION['login_time'] = time();

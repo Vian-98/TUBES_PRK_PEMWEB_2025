@@ -9,15 +9,15 @@ redirect_if_logged_in();
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = escape($_POST['username'] ?? '');
+    $nama = escape($_POST['nama'] ?? '');
     $email = escape($_POST['email'] ?? '');
-    $full_name = escape($_POST['full_name'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
-    $role = escape($_POST['role'] ?? 'kasir');
+    $role_id = escape($_POST['role_id'] ?? '2'); // Default kasir
+    $telepon = escape($_POST['telepon'] ?? '');
     
-    if (empty($username) || empty($email) || empty($full_name) || empty($password)) {
-        $error = "Semua field harus diisi!";
+    if (empty($nama) || empty($email) || empty($password)) {
+        $error = "Nama, email, dan password harus diisi!";
     } elseif (strlen($password) < 6) {
         $error = "Password minimal 6 karakter!";
     } elseif ($password !== $confirm_password) {
@@ -25,33 +25,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Format email tidak valid!";
     } else {
-        $check_username = query("SELECT id FROM users WHERE username = '$username'");
+        $check_email = query("SELECT id FROM users WHERE email = '$email'");
         
-        if (count($check_username) > 0) {
-            $error = "Username sudah digunakan!";
+        if (count($check_email) > 0) {
+            $error = "Email sudah digunakan!";
         } else {
-            $check_email = query("SELECT id FROM users WHERE email = '$email'");
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $now = date('Y-m-d H:i:s');
             
-            if (count($check_email) > 0) {
-                $error = "Email sudah digunakan!";
+            $sql = "INSERT INTO users (nama, email, password, role_id, telepon, aktif, created_at, updated_at) 
+                    VALUES ('$nama', '$email', '$hashed_password', '$role_id', '$telepon', 1, '$now', '$now')";
+            
+            $result = execute($sql);
+            
+            if ($result['success']) {
+                $new_user = query("SELECT u.*, r.nama as role FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email = '$email'")[0];
+                set_user_session($new_user);
+                set_flash("Registrasi berhasil! Selamat datang " . $new_user['nama'], "success");
+                
+                header("Location: ../dashboard/index.php");
+                exit();
             } else {
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                
-                $sql = "INSERT INTO users (username, email, full_name, password, role, is_active) 
-                        VALUES ('$username', '$email', '$full_name', '$hashed_password', '$role', 1)";
-                
-                $result = execute($sql);
-                
-                if ($result['success']) {
-                    $new_user = query("SELECT * FROM users WHERE username = '$username'")[0];
-                    set_user_session($new_user);
-                    set_flash("Registrasi berhasil! Selamat datang " . $new_user['full_name'], "success");
-                    
-                    header("Location: ../dashboard/index.php");
-                    exit();
-                } else {
-                    $error = "Gagal mendaftar: " . $result['error'];
-                }
+                $error = "Gagal mendaftar: " . $result['error'];
             }
         }
     }

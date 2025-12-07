@@ -2,8 +2,9 @@
 $pageTitle = 'Edit Supplier';
 require_once __DIR__ . '/../layout/header.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/cek_login.php';
 
-requireRole('admin');
+require_role(['Admin']);
 
 $error = '';
 $id = $_GET['id'] ?? 0;

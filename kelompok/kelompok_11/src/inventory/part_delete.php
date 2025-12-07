@@ -1,8 +1,9 @@
 <?php
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/cek_login.php';
 
-requireRole('admin');
+require_role(['Admin']);
 
 $id = $_GET['id'] ?? 0;
 

@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/session.php';
+require_once __DIR__ . '/../auth/cek_login.php';
+
+// Require login untuk semua halaman yang pakai header
+require_login();
 
 // Calculate base URL
 $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
@@ -8,7 +11,9 @@ $basePath = str_replace('\\', '/', __DIR__ . '/..');
 $baseUrl = str_replace($docRoot, '', $basePath);
 
 $currentPage = basename($_SERVER['PHP_SELF']);
-$user = getUser();
+
+// Get user data
+$user = get_user_data();
 
 // Get notifications
 $notifications = [];

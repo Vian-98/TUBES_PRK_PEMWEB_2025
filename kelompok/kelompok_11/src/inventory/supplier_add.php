@@ -3,7 +3,7 @@ $pageTitle = 'Tambah Supplier';
 require_once __DIR__ . '/../layout/header.php';
 require_once __DIR__ . '/../config/database.php';
 
-requireRole('admin');
+require_role(['Admin']);
 
 $error = '';
 

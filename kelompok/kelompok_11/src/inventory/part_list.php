@@ -3,7 +3,7 @@ $pageTitle = 'Daftar Sparepart';
 require_once __DIR__ . '/../layout/header.php';
 require_once __DIR__ . '/../config/database.php';
 
-requireRole('admin');
+require_role(['Admin']);
 
 // Get all parts with supplier info
 $sql = "SELECT p.*, s.nama as supplier_nama 
