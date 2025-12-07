@@ -4,6 +4,14 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// STUB DATA - untuk testing tanpa login (hapus setelah auth selesai)
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['user_id'] = 3;
+    $_SESSION['nama'] = 'Mekanik Testing';
+    $_SESSION['email'] = 'mekanik@test.com';
+    $_SESSION['role'] = 'Mekanik';
+}
+
 // Cek apakah user sudah login
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
