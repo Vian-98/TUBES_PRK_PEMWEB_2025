@@ -149,12 +149,12 @@ $notif_count = count($notifications);
             
             <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-2">Menu Utama</p>
 
-            <a href="<?= $baseUrl ?>/dashboard/dashboard.php" class="flex items-center px-4 py-3.5 <?= strpos($currentPage, 'dashboard') !== false ? 'bg-brand-dark text-white' : 'text-gray-600 hover:bg-white/50 hover:text-brand-blue' ?> rounded-2xl transition-all group">
+            <a href="<?= $baseUrl ?>/dashboard/index.php" class="flex items-center px-4 py-3.5 <?= strpos($currentPage, 'dashboard') !== false ? 'bg-brand-dark text-white' : 'text-gray-600 hover:bg-white/50 hover:text-brand-blue' ?> rounded-2xl transition-all group">
                 <i class="fas fa-home w-6 text-center"></i>
                 <span class="font-medium ml-3">Dashboard</span>
             </a>
 
-            <?php if (hasRole('kasir') || hasRole('admin')): ?>
+            <?php if (check_role(['Kasir', 'Admin'])): ?>
             <a href="<?= $baseUrl ?>/pos/pos.php" class="flex items-center px-4 py-3.5 <?= strpos($currentPage, 'pos') !== false ? 'bg-brand-dark text-white' : 'text-gray-600 hover:bg-white/50 hover:text-brand-blue' ?> rounded-2xl transition-all group">
                 <i class="fas fa-cash-register w-6 text-center"></i>
                 <span class="font-medium ml-3">Kasir (POS)</span>
@@ -166,8 +166,8 @@ $notif_count = count($notifications);
                 <span class="font-medium ml-3">Reservasi</span>
             </a>
 
-            <?php if (hasRole('admin')): ?>
-            <a href="<?= $baseUrl ?>/inventory/part_list.php" class="flex items-center px-4 py-3.5 <?= strpos($currentPage, 'part_') !== false || strpos($currentPage, 'supplier_') !== false ? 'bg-brand-dark text-white' : 'text-gray-600 hover:bg-white/50 hover:text-brand-blue' ?> rounded-2xl transition-all group">
+            <?php if (check_role(['Admin'])): ?>
+            <a href="<?= $baseUrl ?>/inventory/part_list.php" class="flex items-center px-4 py-3.5 <?= strpos($currentPage, 'part') !== false || strpos($currentPage, 'supplier') !== false ? 'bg-brand-dark text-white' : 'text-gray-600 hover:bg-white/50 hover:text-brand-blue' ?> rounded-2xl transition-all group">
                 <i class="fas fa-boxes w-6 text-center"></i>
                 <span class="font-medium ml-3">Inventory</span>
             </a>
