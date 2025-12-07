@@ -201,7 +201,8 @@ $notif_count = count($notifications);
             </div>
 
             <div class="flex items-center gap-4">
-                <!-- Context-Aware Search -->
+                <!-- Context-Aware Search (Hidden on Dashboard) -->
+                <?php if (strpos($currentPage, 'dashboard') === false): ?>
                 <div class="hidden md:flex items-center bg-white/60 backdrop-blur-md rounded-full px-4 py-2 border border-white/50 shadow-sm focus-within:ring-2 focus-within:ring-brand-blue/50 transition w-64">
                     <i class="fas fa-search text-gray-400"></i>
                     <input type="text" id="global-search" placeholder="<?php 
@@ -216,6 +217,7 @@ $notif_count = count($notifications);
                         }
                     ?>" class="bg-transparent border-none outline-none text-sm ml-2 w-full placeholder-gray-500 text-gray-700">
                 </div>
+                <?php endif; ?>
 
                 <!-- Notification Dropdown -->
                 <div class="relative">
