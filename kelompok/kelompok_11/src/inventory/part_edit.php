@@ -1,6 +1,5 @@
 <?php
-$pageTitle = 'Edit Sparepart';
-require_once __DIR__ . '/../layout/header.php';
+require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 
 requireRole('admin');
@@ -63,28 +62,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Populate form with existing data
     $_POST = $part;
 }
+
+$pageTitle = 'Edit Sparepart';
+require_once __DIR__ . '/../layout/header.php';
 ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2">
-            <?php include __DIR__ . '/../layout/sidebar.php'; ?>
-        </div>
-        <div class="col-md-10">
-            <div class="mt-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>Edit Sparepart</h2>
-                    <a href="part_list.php" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left me-2"></i>Kembali
-                    </a>
-                </div>
-                
-                <?php if (!empty($error)): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-                <?php endif; ?>
-                
-                <div class="card">
-                    <div class="card-body">
+<?php if ($error): ?>
+<div class="alert alert-danger alert-dismissible fade show" role="alert"><?= htmlspecialchars($error) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php endif; ?>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Edit Sparepart</h2>
+    <a href="part_list.php" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Kembali
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
                         <form method="POST">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
@@ -147,9 +144,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </form>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <?php require_once __DIR__ . '/../layout/footer.php'; ?>

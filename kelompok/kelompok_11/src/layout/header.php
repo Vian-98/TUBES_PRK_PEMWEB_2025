@@ -20,29 +20,49 @@ $baseUrl = str_replace($docRoot, '', $basePath);
     <link href="<?= $baseUrl ?>/css/custom.css" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="<?= $baseUrl ?>/dashboard/dashboard.php">
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-dark bg-primary-blue">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand mb-0 h1">
                 <i class="bi bi-tools me-2"></i>POS UMKM Bengkel
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($user['nama']) ?>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><span class="dropdown-item-text"><small>Role: <?= htmlspecialchars($user['role']) ?></small></span></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="<?= $baseUrl ?>/auth/logout.php">
-                                <i class="bi bi-box-arrow-right me-2"></i>Logout
-                            </a></li>
-                        </ul>
-                    </li>
-                </ul>
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-4 small">
+                    <i class="bi bi-clock me-1"></i><span id="currentTime"></span>
+                </span>
+                <div class="dropdown">
+                    <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($user['nama']) ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text small text-muted"><?= htmlspecialchars($user['role']) ?></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="<?= $baseUrl ?>/auth/logout.php">
+                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                        </a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
+    
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar bg-primary-blue">
+            <?php include __DIR__ . '/sidebar.php'; ?>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content flex-grow-1">
+    
+    <script>
+    function updateTime() {
+        const now = new Date();
+        const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const date = now.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+        const el = document.getElementById('currentTime');
+        if(el) el.textContent = date + ' ' + time;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+    </script>

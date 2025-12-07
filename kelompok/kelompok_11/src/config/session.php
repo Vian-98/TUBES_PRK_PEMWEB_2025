@@ -14,7 +14,7 @@ function hasRole($role) {
     if (!isLoggedIn()) {
         return false;
     }
-    return isset($_SESSION['role']) && $_SESSION['role'] === $role;
+    return isset($_SESSION['role']) && strtolower($_SESSION['role']) === strtolower($role);
 }
 
 // Require login - redirect jika belum login

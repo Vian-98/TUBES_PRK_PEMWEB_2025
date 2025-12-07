@@ -9,45 +9,38 @@ $basePath = str_replace('\\', '/', __DIR__ . '/..');
 $baseUrl = str_replace($docRoot, '', $basePath);
 ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2">
-            <?php include __DIR__ . '/../layout/sidebar.php'; ?>
-        </div>
-        <div class="col-md-10">
-            <div class="mt-4">
-                <h2 class="mb-4">Dashboard</h2>
-                
-                <!-- Statistics Cards -->
-                <div class="row" id="stats-container">
-                    <div class="col-md-4 mb-4">
-                        <div class="card stats-card">
-                            <div class="card-body">
-                                <p class="mb-1">Total Transaksi Hari Ini</p>
-                                <h3 id="total-transaksi">-</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="card stats-card">
-                            <div class="card-body">
-                                <p class="mb-1">Omzet Hari Ini</p>
-                                <h3 id="omzet-hari-ini">-</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="card stats-card">
-                            <div class="card-body">
-                                <p class="mb-1">Reservasi Aktif</p>
-                                <h3 id="reservasi-aktif">-</h3>
-                            </div>
-                        </div>
-                    </div>
+<h2 class="mb-3">Dashboard</h2>
+
+<!-- Statistics Cards -->
+<div class="row" id="stats-container">
+        <div class="col-md-4 mb-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <p class="mb-1 text-muted">Total Transaksi Hari Ini</p>
+                    <h3 class="text-primary-blue" id="total-transaksi">-</h3>
                 </div>
-                
-                <!-- Low Stock Alert -->
-                <div class="row">
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <p class="mb-1 text-muted">Omzet Hari Ini</p>
+                    <h3 class="text-primary-blue" id="omzet-hari-ini">-</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <p class="mb-1 text-muted">Reservasi Aktif</p>
+                    <h3 class="text-primary-blue" id="reservasi-aktif">-</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Alert -->
+    <div class="row">
                     <div class="col-md-6 mb-4">
                         <div class="card">
                             <div class="card-header">
@@ -130,7 +123,6 @@ $baseUrl = str_replace($docRoot, '', $basePath);
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
     </div>
 </div>

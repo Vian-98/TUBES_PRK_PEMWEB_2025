@@ -13,21 +13,14 @@ $sql = "SELECT p.*, s.nama as supplier_nama
 $parts = fetchAll($sql);
 ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2">
-            <?php include __DIR__ . '/../layout/sidebar.php'; ?>
-        </div>
-        <div class="col-md-10">
-            <div class="mt-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>Daftar Sparepart</h2>
-                    <a href="part_add.php" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>Tambah Sparepart
-                    </a>
-                </div>
-                
-                <div class="card">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Daftar Sparepart</h2>
+    <a href="part_add.php" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Tambah Sparepart
+    </a>
+</div>
+
+<div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-hover">
