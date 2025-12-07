@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once '../config/database.php';
-$conn = getConnection(); // FIX: Initialize connection
+$conn = getConnection();
 
 $transaction_id = $_GET['id'] ?? null;
 

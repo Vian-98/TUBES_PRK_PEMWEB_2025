@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Koneksi database
 require_once '../config/database.php';
-$conn = getConnection(); // FIX: Initialize connection
+$conn = getConnection();
 
 // Cek method POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

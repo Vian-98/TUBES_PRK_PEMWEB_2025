@@ -5,7 +5,7 @@ header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once '../config/database.php';
-$conn = getConnection(); // FIX: Initialize connection
+$conn = getConnection();
 
 $method = $_SERVER['REQUEST_METHOD'];
 

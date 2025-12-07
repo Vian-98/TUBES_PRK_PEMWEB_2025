@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once '../config/database.php';
-$conn = getConnection(); // FIX: Initialize connection
+$conn = getConnection();
 
 // Ambil kode transaksi dari URL
 $kode_transaksi = $_GET['tx'] ?? '';
