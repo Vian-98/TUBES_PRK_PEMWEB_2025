@@ -7,11 +7,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Koneksi database
 require_once '../config/database.php';
+$conn = getConnection(); // FIX: Initialize connection
 
-// Ambil ID transaksi dari parameter
-$transaction_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// Ambil ID transaksi
+$transaction_id = $_GET['id'] ?? null;
 
 if ($transaction_id == 0) {
     die('ID Transaksi tidak valid');

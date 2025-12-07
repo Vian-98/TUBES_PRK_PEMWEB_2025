@@ -4,8 +4,10 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Koneksi database
 require_once '../config/database.php';
+$conn = getConnection(); // FIX: Initialize connection
+
+$method = $_SERVER['REQUEST_METHOD'];
 
 // Ambil parameter action
 $action = isset($_GET['action']) ? $_GET['action'] : 'summary';

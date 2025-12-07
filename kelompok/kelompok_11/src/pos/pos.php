@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Koneksi database
 require_once '../config/database.php';
+$conn = getConnection(); // FIX: Initialize connection
 
 // Ambil data layanan
 $query_services = "SELECT * FROM services ORDER BY nama ASC";

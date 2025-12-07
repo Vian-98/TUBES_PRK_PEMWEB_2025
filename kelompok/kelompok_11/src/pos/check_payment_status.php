@@ -1,7 +1,16 @@
 <?php
 session_start();
 header('Content-Type: application/json');
+
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+    exit;
+}
+
 require_once '../config/database.php';
+$conn = getConnection(); // FIX: Initialize connection
+
+$transaction_id = $_GET['id'] ?? null;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
