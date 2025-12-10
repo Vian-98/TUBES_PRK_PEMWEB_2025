@@ -1,9 +1,8 @@
 <?php
 // /reservasi/delete_reservasi.php
 session_start();
-require_once __DIR__ . '/db.php';
-
-
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/cek_login.php';
 
 if (empty($_GET['id'])) {
     $_SESSION['error'] = "ID reservasi tidak diberikan.";

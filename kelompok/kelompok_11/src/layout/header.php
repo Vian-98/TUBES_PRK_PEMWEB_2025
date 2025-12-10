@@ -19,7 +19,7 @@ $user = get_user_data();
 $notifications = [];
 
 // 1. Low stock alerts
-$sql_low_stock = "SELECT nama, stok, min_stok FROM parts WHERE stok <= min_stok ORDER BY stok ASC LIMIT 5";
+$sql_low_stock = "SELECT id, nama, stok, min_stok FROM parts WHERE stok <= min_stok ORDER BY stok ASC LIMIT 5";
 $low_stock = fetchAll($sql_low_stock);
 foreach ($low_stock as $item) {
     $notifications[] = [
@@ -27,12 +27,13 @@ foreach ($low_stock as $item) {
         'icon' => 'exclamation-triangle',
         'title' => 'Stok Menipis',
         'message' => "{$item['nama']} tersisa {$item['stok']} unit (min: {$item['min_stok']})",
-        'time' => 'Sekarang'
+        'time' => 'Sekarang',
+        'link' => $baseUrl . '/inventory/part_edit.php?id=' . $item['id']
     ];
 }
 
 // 2. New reservations today
-$sql_new_reservasi = "SELECT nama_pelanggan, plat_kendaraan FROM reservations WHERE DATE(tanggal) = CURDATE() AND status = 'booked' ORDER BY created_at DESC LIMIT 3";
+$sql_new_reservasi = "SELECT id, nama_pelanggan, plat_kendaraan FROM reservations WHERE DATE(tanggal) = CURDATE() AND status = 'booked' ORDER BY created_at DESC LIMIT 3";
 $new_reservasi = fetchAll($sql_new_reservasi);
 foreach ($new_reservasi as $item) {
     $notifications[] = [
@@ -40,12 +41,13 @@ foreach ($new_reservasi as $item) {
         'icon' => 'calendar-check',
         'title' => 'Reservasi Baru',
         'message' => "{$item['nama_pelanggan']} ({$item['plat_kendaraan']})",
-        'time' => 'Hari ini'
+        'time' => 'Hari ini',
+        'link' => $baseUrl . '/reservasi/detail.php?id=' . $item['id']
     ];
 }
 
 // 3. Draft transactions
-$sql_draft = "SELECT kode, pelanggan_nama FROM transactions WHERE status = 'draft' ORDER BY created_at DESC LIMIT 3";
+$sql_draft = "SELECT id, kode, pelanggan_nama FROM transactions WHERE status = 'draft' ORDER BY created_at DESC LIMIT 3";
 $draft_transactions = fetchAll($sql_draft);
 foreach ($draft_transactions as $item) {
     $notifications[] = [
@@ -53,7 +55,8 @@ foreach ($draft_transactions as $item) {
         'icon' => 'file-invoice',
         'title' => 'Transaksi Draft',
         'message' => "{$item['kode']} - {$item['pelanggan_nama']}",
-        'time' => 'Menunggu'
+        'time' => 'Menunggu',
+        'link' => $baseUrl . '/pos/pos.php?transaction_id=' . $item['id']
     ];
 }
 
@@ -257,7 +260,7 @@ $notif_count = count($notifications);
                                     ];
                                     foreach ($notifications as $notif): 
                                     ?>
-                                    <div class="px-4 py-3 hover:bg-white/40 transition cursor-pointer">
+                                    <a href="<?= $notif['link'] ?>" class="block px-4 py-3 hover:bg-white/40 transition cursor-pointer">
                                         <div class="flex gap-3">
                                             <div class="w-10 h-10 rounded-full <?= $color_map[$notif['type']] ?> flex items-center justify-center flex-shrink-0">
                                                 <i class="fas fa-<?= $notif['icon'] ?>"></i>
@@ -267,8 +270,11 @@ $notif_count = count($notifications);
                                                 <p class="text-xs text-gray-600 mt-0.5 truncate"><?= htmlspecialchars($notif['message']) ?></p>
                                                 <p class="text-xs text-gray-400 mt-1"><?= $notif['time'] ?></p>
                                             </div>
+                                            <div class="text-gray-400">
+                                                <i class="fas fa-chevron-right text-xs"></i>
+                                            </div>
                                         </div>
-                                    </div>
+                                    </a>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </div>
@@ -282,6 +288,42 @@ $notif_count = count($notifications);
         <main class="flex-1 overflow-x-hidden overflow-y-auto px-8 pb-8">
 
 <script>
+// Mobile Menu Toggle
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+mobileMenuBtn?.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+    sidebarOverlay.classList.toggle('hidden');
+});
+
+sidebarOverlay?.addEventListener('click', () => {
+    sidebar.classList.add('-translate-x-full');
+    sidebarOverlay.classList.add('hidden');
+});
+
+// Notification Dropdown Toggle
+const notifBtn = document.getElementById('notif-btn');
+const notifDropdown = document.getElementById('notif-dropdown');
+
+notifBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    notifDropdown.classList.toggle('hidden');
+});
+
+// Close notification dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!notifBtn?.contains(e.target) && !notifDropdown?.contains(e.target)) {
+        notifDropdown?.classList.add('hidden');
+    }
+});
+
+// Prevent dropdown from closing when clicking inside
+notifDropdown?.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
 // Context-Aware Search
 document.getElementById('global-search')?.addEventListener('input', function(e) {
     const searchTerm = e.target.value.toLowerCase().trim();
