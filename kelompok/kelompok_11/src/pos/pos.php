@@ -1,49 +1,51 @@
 <?php
-// Set page title untuk layout
 $pageTitle = 'Point of Sale';
-
-// Include layout header (sudah handle session & auth)
 require_once __DIR__ . '/../layout/header.php';
-
-// Koneksi database
 require_once __DIR__ . '/../config/database.php';
-$conn = getConnection(); 
+$conn = getConnection();
 
-// Ambil data layanan
 $query_services = "SELECT * FROM services ORDER BY nama ASC";
 $services = $conn->query($query_services);
 
-// Ambil data sparepart dengan gambar
 $query_parts = "SELECT id, nama, sku, harga_jual, stok, image_url FROM parts WHERE stok > 0 ORDER BY nama ASC";
 $parts = $conn->query($query_parts);
 
-// Ambil draft transaction jika ada (dari check-in reservasi)
 $draft_transaction = null;
 $draft_items = [];
 $reservation_data = null;
 
 if (isset($_GET['draft_id'])) {
     $draft_id = intval($_GET['draft_id']);
-    
-    $stmt = $conn->prepare("SELECT t.*, r.kode as reservation_kode, r.nama_pelanggan as res_pelanggan, r.telepon as res_telepon 
-                             FROM transactions t 
-                             LEFT JOIN reservations r ON t.reservation_id = r.id 
-                             WHERE t.id = ? AND t.status = 'draft'");
+    $stmt = $conn->prepare("SELECT t.*, r.kode as reservation_kode, r.nama_pelanggan as res_pelanggan, r.telepon as res_telepon FROM transactions t LEFT JOIN reservations r ON t.reservation_id = r.id WHERE t.id = ? AND t.status = 'draft'");
     $stmt->bind_param("i", $draft_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $draft_transaction = $result->fetch_assoc();
-    
     if ($draft_transaction) {
-        // Ambil items dari draft
         $stmt_items = $conn->prepare("SELECT * FROM transaction_items WHERE transaction_id = ?");
         $stmt_items->bind_param("i", $draft_id);
         $stmt_items->execute();
         $draft_items = $stmt_items->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 }
+$completed_reservations = [];
+$stmtCompleted = $conn->prepare("
+    SELECT r.id, r.kode, r.nama_pelanggan, r.telepon, r.plat_kendaraan, r.layanan_id, s.nama AS layanan_nama, s.harga AS layanan_harga
+    FROM reservations r
+    LEFT JOIN services s ON r.layanan_id = s.id
+    WHERE r.status = 'completed'
+      AND NOT EXISTS (
+        SELECT 1 FROM transactions t
+        WHERE t.reservation_id = r.id
+          AND t.status IN ('paid','completed','done','success')
+      )
+    ORDER BY COALESCE(r.updated_at, r.created_at) DESC
+    LIMIT 50
+");
+$stmtCompleted->execute();
+$completed_reservations = $stmtCompleted->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmtCompleted->close();
 ?>
-
 <!-- Custom styles untuk POS -->
 <style>
     .card-item:hover {
@@ -76,7 +78,10 @@ if (isset($_GET['draft_id'])) {
             <div>
                 <h3 class="font-bold text-gray-900">Draft dari Reservasi</h3>
                 <p class="text-sm text-gray-600">
-                    Kode: <strong class="text-green-600"><?php echo htmlspecialchars($draft_transaction['reservation_kode']); ?></strong> 
+                    Kode Transaksi: <strong class="text-green-600"><?php echo htmlspecialchars($draft_transaction['kode'] ?? ''); ?></strong>
+                    <?php if (!empty($draft_transaction['reservation_kode'])): ?>
+                        <span class="ml-2 text-gray-500">[Reservasi: <?php echo htmlspecialchars($draft_transaction['reservation_kode']); ?>]</span>
+                    <?php endif; ?>    
                     | Kasir: <strong><?php echo htmlspecialchars($_SESSION['nama']); ?></strong>
                 </p>
             </div>
@@ -97,216 +102,262 @@ if (isset($_GET['draft_id'])) {
     <?php endif; ?>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Kolom Kiri: Katalog Produk -->
-            <div class="lg:col-span-2">
-                <div class="glass-panel rounded-2xl p-6 shadow-glass">
-                    <!-- Tab Navigation -->
-                    <div class="flex border-b mb-6">
-                        <button onclick="switchTab('layanan')" id="tabLayanan" class="px-6 py-3 font-semibold text-gray-700 tab-active">
-                            <i class="fas fa-tools"></i> Layanan
-                        </button>
-                        <button onclick="switchTab('sparepart')" id="tabSparepart" class="px-6 py-3 font-semibold text-gray-700">
-                            <i class="fas fa-box"></i> Sparepart
-                        </button>
-                    </div>
+        <!-- Kolom Kiri: Katalog Produk -->
+        <div class="lg:col-span-2">
+            <div class="glass-panel rounded-2xl p-6 shadow-glass">
+                <!-- Tab Navigation -->
+                <div class="flex border-b mb-6">
+                    <button onclick="switchTab('layanan')" id="tabLayanan" class="px-6 py-3 font-semibold text-gray-700 tab-active">
+                        <i class="fas fa-tools"></i> Layanan
+                    </button>
+                    <button onclick="switchTab('sparepart')" id="tabSparepart" class="px-6 py-3 font-semibold text-gray-700">
+                        <i class="fas fa-box"></i> Sparepart
+                    </button>
+                </div>
 
-                    <!-- Search Bar -->
-                    <div class="mb-6">
-                        <div class="relative">
-                            <input type="text" id="searchInput" onkeyup="searchItems()" 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                   placeholder="Cari layanan atau sparepart...">
-                            <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
-                        </div>
-                    </div>
-
-                    <!-- Katalog Layanan -->
-                    <div id="katalogLayanan" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto">
-                        <?php 
-                        $services->data_seek(0); // Reset pointer
-                        while ($service = $services->fetch_assoc()): 
-                        ?>
-                            <div class="card-item bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-500 flex flex-col shadow-sm" data-type="layanan" data-nama="<?php echo strtolower($service['nama']); ?>">
-                                <div class="bg-gradient-to-br from-blue-500 to-blue-600 h-32 flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-tools text-6xl text-white opacity-50"></i>
-                                </div>
-                                <div class="p-4 flex flex-col flex-grow">
-                                    <h3 class="font-bold text-gray-800 mb-2 h-12 line-clamp-2"><?php echo htmlspecialchars($service['nama']); ?></h3>
-                                    <p class="text-sm text-gray-600 mb-2 h-10 line-clamp-2"><?php echo htmlspecialchars(substr($service['deskripsi'], 0, 50)); ?>...</p>
-                                    <div class="flex justify-between items-center mb-3 mt-auto">
-                                        <span class="text-lg font-bold text-blue-600">Rp <?php echo number_format($service['harga'], 0, ',', '.'); ?></span>
-                                        <span class="text-xs text-gray-500"><i class="fas fa-clock"></i> <?php echo $service['durasi_menit']; ?> mnt</span>
-                                    </div>
-                                    <button onclick="tambahKeKeranjang('service', <?php echo $service['id']; ?>, '<?php echo addslashes($service['nama']); ?>', <?php echo $service['harga']; ?>, null)" 
-                                            class="w-full bg-[#294B93] hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
-                                        <i class="fas fa-cart-plus"></i> Tambah
-                                    </button>
-                                </div>
-                            </div>
-                        <?php endwhile; ?>
-                    </div>
-
-                    <!-- Katalog Sparepart -->
-                    <div id="katalogSparepart" class="hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto">
-                        <?php 
-                        $parts->data_seek(0); // Reset pointer
-                        while ($part = $parts->fetch_assoc()): 
-                        ?>
-                            <div class="card-item bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-xl overflow-hidden hover:border-green-500 flex flex-col shadow-sm" data-type="sparepart" data-nama="<?php echo strtolower($part['nama']); ?>">
-                                <?php if (!empty($part['image_url'])): ?>
-                                    <!-- Tampilkan gambar jika ada -->
-                                    <img src="<?php echo htmlspecialchars($part['image_url']); ?>" 
-                                         alt="<?php echo htmlspecialchars($part['nama']); ?>" 
-                                         class="item-image flex-shrink-0" 
-                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <!-- Fallback icon jika gambar error -->
-                                    <div class="bg-gradient-to-br from-green-500 to-green-600 h-32 items-center justify-center flex-shrink-0" style="display: none;">
-                                        <i class="fas fa-box text-6xl text-white opacity-50"></i>
-                                    </div>
-                                <?php else: ?>
-                                    <!-- Tampilkan icon jika tidak ada gambar -->
-                                    <div class="bg-gradient-to-br from-green-500 to-green-600 h-32 flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-box text-6xl text-white opacity-50"></i>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="p-4 flex flex-col flex-grow">
-                                    <h3 class="font-bold text-gray-800 mb-1 h-12 line-clamp-2"><?php echo htmlspecialchars($part['nama']); ?></h3>
-                                    <p class="text-xs text-gray-500 mb-2 h-5">SKU: <?php echo htmlspecialchars($part['sku']); ?></p>
-                                    <div class="flex justify-between items-center mb-3 mt-auto">
-                                        <span class="text-lg font-bold text-green-600">Rp <?php echo number_format($part['harga_jual'], 0, ',', '.'); ?></span>
-                                        <span class="text-xs px-2 py-1 rounded-full <?php echo $part['stok'] <= 10 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'; ?>">
-                                            <i class="fas fa-box"></i> Stok: <?php echo $part['stok']; ?>
-                                        </span>
-                                    </div>
-                                    <button onclick="tambahKeKeranjang('part', <?php echo $part['id']; ?>, '<?php echo addslashes($part['nama']); ?>', <?php echo $part['harga_jual']; ?>, <?php echo $part['stok']; ?>)" 
-                                            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
-                                        <i class="fas fa-cart-plus"></i> Tambah
-                                    </button>
-                                </div>
-                            </div>
-                        <?php endwhile; ?>
+                <!-- Search Bar -->
+                <div class="mb-6">
+                    <div class="relative">
+                        <input type="text" id="searchInput" onkeyup="searchItems()" 
+                               class="w-full border border-gray-300 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Cari layanan atau sparepart...">
+                        <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
                     </div>
                 </div>
 
-                <!-- Keranjang Belanja -->
-                <div class="glass-panel rounded-2xl p-6 shadow-glass mt-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">
-                        <i class="fas fa-shopping-cart text-purple-600"></i> Keranjang Belanja
-                        <span id="cartCount" class="ml-2 bg-purple-600 text-white text-sm px-3 py-1 rounded-full">0</span>
-                    </h2>
-                    
-                    <div id="keranjangItems" class="space-y-3">
-                        <!-- Items akan di-render oleh JavaScript -->
-                        <div id="emptyCart" class="text-center py-12 text-gray-400">
-                            <i class="fas fa-shopping-cart text-6xl mb-4"></i>
-                            <p>Keranjang masih kosong</p>
-                            <p class="text-sm mt-2">Pilih layanan atau sparepart untuk memulai transaksi</p>
+                <!-- Katalog Layanan -->
+                <div id="katalogLayanan" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto">
+                    <?php 
+                    $services->data_seek(0); // Reset pointer
+                    while ($service = $services->fetch_assoc()): 
+                    ?>
+                        <div class="card-item bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-500 flex flex-col shadow-sm" data-type="layanan" data-nama="<?php echo strtolower($service['nama']); ?>">
+                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 h-32 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-tools text-6xl text-white opacity-50"></i>
+                            </div>
+                            <div class="p-4 flex flex-col flex-grow">
+                                <h3 class="font-bold text-gray-800 mb-2 h-12 line-clamp-2"><?php echo htmlspecialchars($service['nama']); ?></h3>
+                                <p class="text-sm text-gray-600 mb-2 h-10 line-clamp-2"><?php echo htmlspecialchars(substr($service['deskripsi'], 0, 50)); ?>...</p>
+                                <div class="flex justify-between items-center mb-3 mt-auto">
+                                    <span class="text-lg font-bold text-blue-600">Rp <?php echo number_format($service['harga'], 0, ',', '.'); ?></span>
+                                    <span class="text-xs text-gray-500"><i class="fas fa-clock"></i> <?php echo $service['durasi_menit']; ?> mnt</span>
+                                </div>
+                                <button onclick="tambahKeKeranjang('service', <?php echo $service['id']; ?>, '<?php echo addslashes($service['nama']); ?>', <?php echo $service['harga']; ?>, null)" 
+                                        class="w-full bg-[#294B93] hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+                                    <i class="fas fa-cart-plus"></i> Tambah
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    <?php endwhile; ?>
+                </div>
+
+                <!-- Katalog Sparepart -->
+                <div id="katalogSparepart" class="hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto">
+                    <?php 
+                    $parts->data_seek(0); // Reset pointer
+                    while ($part = $parts->fetch_assoc()): 
+                    ?>
+                        <div class="card-item bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-xl overflow-hidden hover:border-green-500 flex flex-col shadow-sm" data-type="sparepart" data-nama="<?php echo strtolower($part['nama']); ?>">
+                            <?php if (!empty($part['image_url'])): ?>
+                                <!-- Tampilkan gambar jika ada -->
+                                <img src="<?php echo htmlspecialchars($part['image_url']); ?>" 
+                                     alt="<?php echo htmlspecialchars($part['nama']); ?>" 
+                                     class="item-image flex-shrink-0" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <!-- Fallback icon jika gambar error -->
+                                <div class="bg-gradient-to-br from-green-500 to-green-600 h-32 items-center justify-center flex-shrink-0" style="display: none;">
+                                    <i class="fas fa-box text-6l text-white opacity-50"></i>
+                                </div>
+                            <?php else: ?>
+                                <!-- Tampilkan icon jika tidak ada gambar -->
+                                <div class="bg-gradient-to-br from-green-500 to-green-600 h-32 flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-box text-6xl text-white opacity-50"></i>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div class="p-4 flex flex-col flex-grow">
+                                <h3 class="font-bold text-gray-800 mb-1 h-12 line-clamp-2"><?php echo htmlspecialchars($part['nama']); ?></h3>
+                                <p class="text-xs text-gray-500 mb-2 h-5">SKU: <?php echo htmlspecialchars($part['sku']); ?></p>
+                                <div class="flex justify-between items-center mb-3 mt-auto">
+                                    <span class="text-lg font-bold text-green-600">Rp <?php echo number_format($part['harga_jual'], 0, ',', '.'); ?></span>
+                                    <span class="text-xs px-2 py-1 rounded-full <?php echo $part['stok'] <= 10 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'; ?>">
+                                        <i class="fas fa-box"></i> Stok: <?php echo $part['stok']; ?>
+                                    </span>
+                                </div>
+                                <button onclick="tambahKeKeranjang('part', <?php echo $part['id']; ?>, '<?php echo addslashes($part['nama']); ?>', <?php echo $part['harga_jual']; ?>, <?php echo $part['stok']; ?>)" 
+                                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
+                                    <i class="fas fa-cart-plus"></i> Tambah
+                                </button>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
                 </div>
             </div>
 
-            <!-- Kolom Kanan: Pembayaran -->
-            <div class="lg:col-span-1">
-                <div class="glass-panel rounded-2xl p-6 shadow-glass sticky top-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">
-                        <i class="fas fa-money-bill-wave text-green-600"></i> Pembayaran
-                    </h2>
-
-                    <!-- Info Pelanggan -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Pelanggan</label>
-                        <input type="text" id="namaPelanggan" 
-                               value="<?php echo $draft_transaction ? htmlspecialchars($draft_transaction['res_pelanggan'] ?? $draft_transaction['pelanggan_nama']) : ''; ?>"
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <!-- Keranjang Belanja -->
+            <div class="glass-panel rounded-2xl p-6 shadow-glass mt-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-shopping-cart text-purple-600"></i> Keranjang Belanja
+                    <span id="cartCount" class="ml-2 bg-purple-600 text-white text-sm px-3 py-1 rounded-full">0</span>
+                </h2>
+                
+                <div id="keranjangItems" class="space-y-3">
+                    <!-- Items akan di-render oleh JavaScript -->
+                    <div id="emptyCart" class="text-center py-12 text-gray-400">
+                        <i class="fas fa-shopping-cart text-6xl mb-4"></i>
+                        <p>Keranjang masih kosong</p>
+                        <p class="text-sm mt-2">Pilih layanan atau sparepart untuk memulai transaksi</p>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="mb-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Telepon</label>
-                        <input type="text" id="teleponPelanggan" 
-                               value="<?php echo $draft_transaction ? htmlspecialchars($draft_transaction['res_telepon'] ?? $draft_transaction['pelanggan_telepon']) : ''; ?>"
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <!-- Kolom Kanan: Pembayaran -->
+        <div class="lg:col-span-1">
+            <div class="glass-panel rounded-2xl p-6 shadow-glass sticky top-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-money-bill-wave text-green-600"></i> Pembayaran
+                </h2>
+
+                <!-- Pilih reservasi selesai -->
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Reservasi Selesai</label>
+                    <select id="completedReservationSelect" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">- Pilih reservasi completed -</option>
+                        <?php foreach ($completed_reservations as $r): ?>
+                            <option value="<?php echo $r['id']; ?>">
+                                <?php echo htmlspecialchars($r['kode'] . ' | ' . $r['nama_pelanggan'] . ' | ' . ($r['plat_kendaraan'] ?? '')); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Pelanggan</label>
+                    <input type="text" id="namaPelanggan" 
+                           value="<?php echo $draft_transaction ? htmlspecialchars($draft_transaction['res_pelanggan'] ?? $draft_transaction['pelanggan_nama']) : ''; ?>"
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Telepon</label>
+                    <input type="text" id="teleponPelanggan" 
+                            htmlspecialchars($draft_transaction['res_telepon'] ?? $draft_transaction['pelanggan_telepon'] ?? '')
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="border-t border-b border-gray-300 py-4 mb-4">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-700">Total</span>
+                        <span class="font-semibold" id="totalHarga">Rp 0</span>
                     </div>
-
-                    <!-- Ringkasan Harga -->
-                    <div class="border-t border-b border-gray-300 py-4 mb-4">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-700">Total</span>
-                            <span class="font-semibold" id="totalHarga">Rp 0</span>
-                        </div>
-                        <div class="flex justify-between mb-2">
-                            <label class="text-gray-700">Diskon (Rp)</label>
-                            <input type="number" id="diskon" value="0" min="0" 
-                                   onchange="hitungGrandTotal()"
-                                   class="w-32 text-right border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div class="flex justify-between text-lg font-bold">
-                            <span class="text-gray-800">Grand Total</span>
-                            <span class="text-blue-600" id="grandTotal">Rp 0</span>
-                        </div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-gray-700">Diskon (Rp)</label>
+                        <input type="number" id="diskon" value="0" min="0" 
+                               onchange="hitungGrandTotal()"
+                               class="w-32 text-right border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-
-                    <!-- Metode Pembayaran -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Metode Pembayaran</label>
-                        <select id="metodePembayaran" onchange="handleMetodePembayaranChange()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="tunai">💵 Tunai</option>
-                            <option value="qris">📱 QRIS</option>
-                            <option value="transfer">🏦 Transfer Bank</option>
-                        </select>
+                    <div class="flex justify-between text-lg font-bold">
+                        <span class="text-gray-800">Grand Total</span>
+                        <span class="text-blue-600" id="grandTotal">Rp 0</span>
                     </div>
+                </div>
 
-                    <!-- Jumlah Bayar -->
-                    <div class="mb-4" id="jumlahBayarContainer">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Jumlah Bayar</label>
-                        <input type="number" id="jumlahBayar" value="0" min="0" 
-                               onchange="hitungKembalian()"
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Masukkan jumlah uang yang diterima</p>
-                    </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Metode Pembayaran</label>
+                    <select id="metodePembayaran" onchange="handleMetodePembayaranChange()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="tunai">💵 Tunai</option>
+                        <option value="qris">📱 QRIS</option>
+                        <option value="transfer">🏦 Transfer Bank</option>
+                    </select>
+                </div>
 
-                    <!-- QRIS Notice (hidden by default) -->
-                    <div class="mb-4 hidden" id="qrisNotice">
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-qrcode text-2xl text-blue-600"></i>
-                                <div>
-                                    <p class="font-semibold text-blue-800 mb-1">Pembayaran QRIS</p>
-                                    <p class="text-sm text-blue-600">QR Code akan otomatis di-generate sesuai grand total</p>
-                                    <p class="text-xs text-blue-500 mt-1">Customer scan QR untuk membayar secara digital</p>
-                                </div>
+                <div class="mb-4" id="jumlahBayarContainer">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Jumlah Bayar</label>
+                    <input type="number" id="jumlahBayar" value="0" min="0" 
+                           onchange="hitungKembalian()"
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">Masukkan jumlah uang yang diterima</p>
+                </div>
+
+                <div class="mb-4 hidden" id="qrisNotice">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-qrcode text-2xl text-blue-600"></i>
+                            <div>
+                                <p class="font-semibold text-blue-800 mb-1">Pembayaran QRIS</p>
+                                <p class="text-sm text-blue-600">QR Code akan otomatis di-generate sesuai grand total</p>
+                                <p class="text-xs text-blue-500 mt-1">Customer scan QR untuk membayar secara digital</p>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Kembalian -->
-                    <div class="mb-6 p-4 bg-yellow-50 rounded-lg" id="kembalianContainer">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-700 font-semibold">Kembalian</span>
-                            <span class="text-xl font-bold text-yellow-600" id="kembalian">Rp 0</span>
-                        </div>
-                    </div>
-
-                    <!-- Tombol Proses -->
-                    <button onclick="prosesPembayaran()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 rounded-lg shadow-lg transition transform hover:scale-105">
-                        <i class="fas fa-check-circle"></i> Proses Pembayaran
-                    </button>
-
-                    <button onclick="resetForm()" class="w-full mt-3 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg transition">
-                        <i class="fas fa-redo"></i> Reset
-                    </button>
-
-                    <!-- Hidden fields -->
-                    <input type="hidden" id="reservationId" value="<?php echo $draft_transaction ? $draft_transaction['reservation_id'] : ''; ?>">
-                    <input type="hidden" id="draftTransactionId" value="<?php echo $draft_transaction ? $draft_transaction['id'] : ''; ?>">
                 </div>
+
+                <div class="mb-6 p-4 bg-yellow-50 rounded-lg" id="kembalianContainer">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700 font-semibold">Kembalian</span>
+                        <span class="text-xl font-bold text-yellow-600" id="kembalian">Rp 0</span>
+                    </div>
+                </div>
+
+                <button onclick="prosesPembayaran()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 rounded-lg shadow-lg transition transform hover:scale-105">
+                    <i class="fas fa-check-circle"></i> Proses Pembayaran
+                </button>
+
+                <button onclick="resetForm()" class="w-full mt-3 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg transition">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+
+                <!-- Hidden fields -->
+                <input type="hidden" id="reservationId" value="<?php echo $draft_transaction ? $draft_transaction['reservation_id'] : ''; ?>">
+                <input type="hidden" id="draftTransactionId" value="<?php echo $draft_transaction ? $draft_transaction['id'] : ''; ?>">
             </div>
         </div>
     </div>
 
     <script src="../js/pos.js"></script>
     <script>
+        const completedReservations = <?php echo json_encode($completed_reservations, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        const reservationMap = {};
+        completedReservations.forEach(r => { reservationMap[r.id] = r; });
+
+        const selectReservasi = document.getElementById('completedReservationSelect');
+        const namaPelangganInput = document.getElementById('namaPelanggan');
+        const teleponPelangganInput = document.getElementById('teleponPelanggan');
+        const reservationIdInput = document.getElementById('reservationId');
+        let lastAddedReservationId = null;
+
+        function addServiceFromReservation(data) {
+            if (!data || !data.layanan_id || !data.layanan_nama || !data.layanan_harga) return;
+            tambahItemManual({
+                id: 's_' + data.layanan_id,
+                nama: data.layanan_nama,
+                harga: parseInt(data.layanan_harga, 10) || 0,
+                qty: 1,
+                tipe: 'service'
+            });
+        }
+
+        if (selectReservasi) {
+            selectReservasi.addEventListener('change', () => {
+                const rid = selectReservasi.value;
+                if (!rid) {
+                    reservationIdInput.value = '';
+                    lastAddedReservationId = null;
+                    return;
+                }
+                const data = reservationMap[rid];
+                if (!data) return;
+                reservationIdInput.value = rid;
+                namaPelangganInput.value = data.nama_pelanggan || '';
+                teleponPelangganInput.value = data.telepon || '';
+                if (lastAddedReservationId !== rid) {
+                    addServiceFromReservation(data);
+                    lastAddedReservationId = rid;
+                }
+            });
+        }
+
         // Load draft items jika ada
         <?php if (!empty($draft_items)): ?>
             <?php foreach ($draft_items as $item): ?>
@@ -374,7 +425,4 @@ if (isset($_GET['draft_id'])) {
         </div>
     </div>
 
-<?php 
-// Include layout footer
-require_once __DIR__ . '/../layout/footer.php'; 
-?>
+<?php require_once __DIR__ . '/../layout/footer.php'; ?>

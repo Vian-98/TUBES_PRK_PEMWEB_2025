@@ -4,6 +4,15 @@ session_start();
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../auth/cek_login.php';
 
+if (isset($_POST['selesai_id'])) {
+    $id = intval($_POST['selesai_id']);
+    $now = date('Y-m-d H:i:s');
+    execute("UPDATE reservations SET status = 'completed', updated_at = '$now' WHERE id = $id");
+    $_SESSION['success'] = "Reservasi berhasil diselesaikan!";
+    header("Location: list.php");
+    exit;
+}
+
 if (!empty($_SESSION['error'])) { $err = $_SESSION['error']; unset($_SESSION['error']); }
 if (!empty($_SESSION['success'])) { $ok = $_SESSION['success']; unset($_SESSION['success']); }
 
@@ -85,9 +94,9 @@ require_once __DIR__ . '/../layout/header.php';
                             <?php 
                             $status_class = match($r['status'] ?? '') {
                                 'booked' => 'bg-blue-100 text-blue-800',
-                                'checked_in' => 'bg-yellow-100 text-yellow-800',
+                                'in_progress' => 'bg-yellow-100 text-yellow-800',
                                 'completed' => 'bg-green-100 text-green-800',
-                                'cancelled' => 'bg-red-100 text-red-800',
+                                'canceled' => 'bg-red-100 text-red-800',
                                 default => 'bg-gray-100 text-gray-800'
                             };
                             ?>
@@ -103,12 +112,27 @@ require_once __DIR__ . '/../layout/header.php';
                                 <i class="fas fa-trash"></i> Delete
                             </a>
                             <?php if (($r['status'] ?? '') === 'booked'): ?>
-                            <form method="post" action="checkin_reservasi.php" class="inline">
-                                <input type="hidden" name="id" value="<?= $r['id'] ?>">
-                                <button class="text-green-600 hover:text-green-900 transition" onclick="return confirm('Check-in dan buat draft transaksi?')">
-                                    <i class="fas fa-check-circle"></i> Check-in
-                                </button>
-                            </form>
+                                <form method="post" action="checkin_reservasi.php" style="display:inline">
+                                    <input type="hidden" name="id" value="<?= $r['id'] ?>">
+                                    <button class="text-green-600 hover:text-green-900 transition" onclick="return confirm('Check-in dan buat draft transaksi?')">
+                                        <i class="fas fa-check-circle"></i> Check-in
+                                    </button>
+                                </form>
+                            <?php elseif (($r['status'] ?? '') === 'in_progress'): ?>
+                                <form method="post" style="display:inline">
+                                    <input type="hidden" name="selesai_id" value="<?= $r['id'] ?>">
+                                    <button class="text-blue-600 hover:text-blue-900 transition" onclick="return confirm('Selesaikan reservasi ini?')">
+                                        <i class="fas fa-check"></i> Selesai
+                                    </button>
+                                </form>
+                                <form method="post" action="batal_reservasi.php" style="display:inline">
+                                    <input type="hidden" name="id" value="<?= $r['id'] ?>">
+                                    <button class="text-red-600 hover:text-red-900 transition" onclick="return confirm('Batalkan reservasi ini?')">
+                                        <i class="fas fa-times"></i> Batalkan
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <small>-</small>
                             <?php endif; ?>
                         </td>
                     </tr>

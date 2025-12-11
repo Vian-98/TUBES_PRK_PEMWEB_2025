@@ -42,7 +42,7 @@ $flash = get_flash();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - POS UKM</title>
+    <title>Bengkel UMKM</title>
     <style>
         * {
             margin: 0;
@@ -186,7 +186,7 @@ $flash = get_flash();
 <body>
     <div class="login-container">
         <div class="login-header">
-            <h1>🔐 POS UKM</h1>
+            <h1>🔐 Bengkel UMKM</h1>
             <p>Silakan login untuk melanjutkan</p>
         </div>
         
@@ -216,12 +216,6 @@ $flash = get_flash();
         
         <div class="register-link">
             Belum punya akun? <a href="register.php">Daftar di sini</a>
-        </div>
-        
-        <div class="demo-info">
-            <strong>🎯 Demo Account:</strong><br>
-            Email: admin@bengkel.com<br>
-            Password: admin
         </div>
     </div>
     

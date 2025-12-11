@@ -20,14 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Ambil data dari form
 $items = json_decode($_POST['items'], true);
-$nama_pelanggan = $_POST['nama_pelanggan'];
-$telepon_pelanggan = $_POST['telepon_pelanggan'] ?? null;
-$total = floatval($_POST['total']);
-$diskon = floatval($_POST['diskon']);
-$grand_total = floatval($_POST['grand_total']);
-$bayar = floatval($_POST['bayar']);
-$kembali = floatval($_POST['kembali']);
-$metode_pembayaran = $_POST['metode_pembayaran'];
+$nama_pelanggan = $_POST['nama_pelanggan'] ?? '';
+$telepon_pelanggan = $_POST['telepon_pelanggan'] ?? '';
+$total = floatval($_POST['total'] ?? 0);
+$diskon = floatval($_POST['diskon'] ?? 0);
+$grand_total = floatval($_POST['grand_total'] ?? 0);
+$bayar = floatval($_POST['bayar'] ?? 0);
+$kembali = floatval($_POST['kembali'] ?? 0);
+$metode_pembayaran = $_POST['metode_pembayaran'] ?? '';
 $reservation_id = !empty($_POST['reservation_id']) ? intval($_POST['reservation_id']) : null;
 $draft_transaction_id = !empty($_POST['draft_transaction_id']) ? intval($_POST['draft_transaction_id']) : null;
 $kasir_id = $_SESSION['user_id'];
@@ -125,24 +125,32 @@ try {
                                   VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
     
     foreach ($items as $item) {
-        $service_id = $item['tipe'] === 'service' ? intval($item['serviceId']) : null;
-        $part_id = $item['tipe'] === 'part' ? intval($item['partId']) : null;
-        $nama_item = $item['nama'];
-        $qty = intval($item['qty']);
-        $harga_unit = floatval($item['harga']);
-        $subtotal = floatval($item['subtotal']);
-        
-        $stmt_item->bind_param("iiisidi", 
-            $transaction_id, 
-            $service_id, 
-            $part_id, 
-            $nama_item, 
-            $qty, 
-            $harga_unit, 
+        $service_id = isset($item['serviceId']) ? intval($item['serviceId']) : null;
+        $part_id = isset($item['partId']) ? intval($item['partId']) : null;
+        if ($item['tipe'] === 'service') {
+            $service_id = intval(str_replace('s_', '', $item['id']));
+            $part_id = null;
+        } elseif ($item['tipe'] === 'part') {
+            $part_id = intval(str_replace('p_', '', $item['id']));
+            $service_id = null;
+        }
+        $nama_item = $item['nama'] ?? '';
+        $qty = intval($item['qty'] ?? 1);
+        $harga_unit = floatval($item['harga'] ?? 0);
+        $subtotal = floatval($item['subtotal'] ?? ($qty * $harga_unit));
+
+        $stmt_item->bind_param(
+            "iiisidi",
+            $transaction_id,
+            $service_id,
+            $part_id,
+            $nama_item,
+            $qty,
+            $harga_unit,
             $subtotal
         );
         $stmt_item->execute();
-        
+
         // 3. Update stok jika sparepart
         if ($item['tipe'] === 'part') {
             // Cek stok DULU

@@ -114,7 +114,12 @@ $payment = $stmt_payment->get_result()->fetch_assoc();
                     </div>
                     <div class="flex justify-between text-sm mb-1">
                         <span class="font-semibold">Tanggal:</span>
-                        <span><?php echo date('d/m/Y H:i', strtotime($transaksi['created_at'])); ?></span>
+                        <span>
+                        <?php
+                        $createdAt = $transaksi['created_at'] ?? '';
+                        echo $createdAt ? date('d/m/Y H:i', strtotime($createdAt)) : '-';
+                        ?>
+                        </span>
                     </div>
                     <div class="flex justify-between text-sm mb-1">
                         <span class="font-semibold">Kasir:</span>

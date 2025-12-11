@@ -42,7 +42,7 @@ foreach ($new_reservasi as $item) {
         'title' => 'Reservasi Baru',
         'message' => "{$item['nama_pelanggan']} ({$item['plat_kendaraan']})",
         'time' => 'Hari ini',
-        'link' => $baseUrl . '/reservasi/detail.php?id=' . $item['id']
+        'link' => $baseUrl . '/reservasi/list.php?id=' . $item['id']
     ];
 }
 
@@ -56,7 +56,7 @@ foreach ($draft_transactions as $item) {
         'title' => 'Transaksi Draft',
         'message' => "{$item['kode']} - {$item['pelanggan_nama']}",
         'time' => 'Menunggu',
-        'link' => $baseUrl . '/pos/pos.php?transaction_id=' . $item['id']
+        'link' => $baseUrl . '/pos/pos.php?draft_id=' . $item['id']
     ];
 }
 
@@ -142,8 +142,8 @@ $notif_count = count($notifications);
                 <i class="fas fa-wrench text-lg"></i>
             </div>
             <div>
-                <h1 class="text-lg font-bold tracking-tight text-gray-900 leading-none">Bengkel<span class="text-brand-blue">App</span></h1>
-                <p class="text-[10px] font-medium text-gray-500 uppercase tracking-widest mt-1">Management</p>
+                <h1 class="text-lg font-bold tracking-tight text-gray-900 leading-none">Bengkel</h1>
+                <p class="text-[10px] font-medium text-gray-500 uppercase tracking-widest mt-1">UMKM</p>
             </div>
         </div>
 
